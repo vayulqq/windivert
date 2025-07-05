@@ -1,8 +1,6 @@
 name: Build WinDivert
 
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -17,28 +15,26 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Download and Unzip WinDivert
+        shell: powershell
         run: |
           Invoke-WebRequest -Uri https://reqrypt.org/download/WinDivert-2.2.2-Source.zip -OutFile WinDivert.zip
           Expand-Archive -Path WinDivert.zip -DestinationPath .
           dir WinDivert-2.2.2
-        shell: powershell
 
-      - name: Retarget Visual Studio projects to latest toolset
+      - name: Add WDK environment to PATH
         run: |
-          Get-ChildItem -Recurse -Filter *.vcxproj | ForEach-Object {
-            (Get-Content $_.FullName) -replace 'v140', 'v143' | Set-Content $_.FullName
-          }
-        working-directory: WinDivert-2.2.2
-        shell: powershell
+          echo ##[group]List installed WDKs
+          dir "C:\Program Files (x86)\Windows Kits\10"
+          echo ##[endgroup]
+        shell: cmd
 
-      - name: Build WinDivert DLL (Release x64)
-        run: |
-          msbuild dll\windivert.vcxproj /p:Configuration=Release /p:Platform=x64
+      - name: Build with WDDK script
+        run: wddk-build.bat
         working-directory: WinDivert-2.2.2
         shell: cmd
 
-      - name: Upload WinDivert DLL
+      - name: Upload WinDivert DLL artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WinDivert-DLL
-          path: WinDivert-2.2.2\dll\bin\WinDivert.dll
+          name: WinDivert-Binaries
+          path: WinDivert-2.2.2\dll\bin\
