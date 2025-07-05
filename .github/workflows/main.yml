@@ -14,6 +14,11 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Install Windows Driver Kit (WDK)
+        run: |
+          choco install windows-driver-kit --version=10.1.10586.0 -y
+        shell: powershell
+
       - name: Download and Unzip WinDivert
         shell: powershell
         run: |
@@ -21,15 +26,16 @@ jobs:
           Expand-Archive -Path WinDivert.zip -DestinationPath .
           dir WinDivert-2.2.2
 
-      - name: Add WDK environment to PATH
+      - name: Add WDK build tools to PATH
         run: |
-          echo ##[group]List installed WDKs
-          dir "C:\Program Files (x86)\Windows Kits\10"
-          echo ##[endgroup]
+          set "WDKPATH=C:\Program Files (x86)\Windows Kits\10\Tools\x86"
+          set "PATH=%WDKPATH%;%PATH%"
+          build -help
         shell: cmd
 
-      - name: Build with WDDK script
-        run: wddk-build.bat
+      - name: Build with wddk-build.bat
+        run: |
+          call "wddk-build.bat"
         working-directory: WinDivert-2.2.2
         shell: cmd
 
