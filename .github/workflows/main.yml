@@ -11,14 +11,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Install Windows Driver Kit (WDK)
-        run: |
-          choco install windows-driver-kit --version=10.1.10586.0 -y
-        shell: powershell
-
       - name: Download and Unzip WinDivert
         shell: powershell
         run: |
@@ -26,20 +18,28 @@ jobs:
           Expand-Archive -Path WinDivert.zip -DestinationPath .
           dir WinDivert-2.2.2
 
-      - name: Add WDK build tools to PATH
+      - name: Install Visual Studio + WDK build tools
         run: |
-          set "WDKPATH=C:\Program Files (x86)\Windows Kits\10\Tools\x86"
-          set "PATH=%WDKPATH%;%PATH%"
-          build -help
+          choco install visualstudio2022-workload-manageddesktop --yes
+          choco install visualstudio2022-workload-nativedesktop --yes
+          choco install visualstudio2022-workload-netweb --yes
+          choco install visualstudio2022buildtools --yes
+          choco install windows-sdk-10-version-2104-all --yes
+        shell: powershell
+
+      - name: Verify WDK presence
+        run: |
+          where build
+          where msbuild
         shell: cmd
 
       - name: Build with wddk-build.bat
         run: |
-          call "wddk-build.bat"
+          call wddk-build.bat
         working-directory: WinDivert-2.2.2
         shell: cmd
 
-      - name: Upload WinDivert DLL artifacts
+      - name: Upload WinDivert binaries
         uses: actions/upload-artifact@v4
         with:
           name: WinDivert-Binaries
