@@ -1,0 +1,54 @@
+# Имя рабочего процесса, которое будет отображаться в GitHub Actions
+name: Build WinDivert
+
+# Триггеры для запуска рабочего процесса
+on:
+  # Запускать при push в ветку main
+  push:
+    branches: [ "main" ]
+  # Позволяет запускать этот рабочий процесс вручную со страницы Actions
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Указываем, что задача должна выполняться на последней версии Windows
+    runs-on: windows-latest
+
+    steps:
+      # Шаг 1: Клонирование репозитория
+      # Этот шаг необходим для доступа к рабочему пространству
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Шаг 2: Настройка среды сборки MSVC
+      # Устанавливает необходимые переменные окружения и пути для MSBuild
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      # Шаг 3: Скачивание и распаковка архива WinDivert
+      # Используем PowerShell для выполнения этих операций
+      - name: Download and Unzip WinDivert
+        run: |
+          Invoke-WebRequest -Uri https://reqrypt.org/download/WinDivert-2.2.2-Source.zip -OutFile WinDivert.zip
+          Expand-Archive -Path WinDivert.zip -DestinationPath .
+        shell: powershell
+
+      # Шаг 4: Сборка проекта WinDivert
+      # Переходим в папку с исходным кодом и запускаем сборочный скрипт
+      - name: Build WinDivert
+        run: msvc-build.bat
+        # Указываем рабочую директорию, где находится скрипт сборки
+        working-directory: WinDivert-2.2.2-Source/WinDivert-2.2.2
+        # Используем командную строку (cmd) для запуска .bat файла
+        shell: cmd
+
+      # Шаг 5: Загрузка артефактов сборки
+      # Собираем скомпилированные файлы из папки 'install' и сохраняем их как артефакт
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          # Имя артефакта, которое будет отображаться в GitHub
+          name: WinDivert-build
+          # Путь к папке с результатами сборки. Скрипт msvc-build.bat
+          # складывает все файлы в папку 'install' в корне рабочего пространства.
+          path: install/
