@@ -38,7 +38,7 @@ jobs:
       - name: Build WinDivert
         run: msvc-build.bat
         # Указываем рабочую директорию, где находится скрипт сборки
-        working-directory: WinDivert-2.2.2-Source/WinDivert-2.2.2
+        working-directory: WinDivert-2.2.2
         # Используем командную строку (cmd) для запуска .bat файла
         shell: cmd
 
@@ -51,4 +51,4 @@ jobs:
           name: WinDivert-build
           # Путь к папке с результатами сборки. Скрипт msvc-build.bat
           # складывает все файлы в папку 'install' в корне рабочего пространства.
-          path: install/
+          path: WinDivert-2.2.2/install/
